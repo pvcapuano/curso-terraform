@@ -1,0 +1,24 @@
+parameters:
+  - name: CLOUD_TRUTH_PROJECT_API_KEY
+    type: string
+  - name: CLOUD_TRUTH_DEPLOYMENT_PROJECT
+    type: string
+  - name: CLOUD_TRUTH_ENVIRONMENT_VARIABLES_TEMPLATE
+    type: string
+
+steps:
+  - powershell: |
+      $CLOUDTRUTH_CLI_VERSION = ((Invoke-WebRequest -UseBasicParsing https://api.github.com/repos/cloudtruth/cloudtruth-cli/releases/latest).Content | ConvertFrom-Json).tag_name
+      Invoke-WebRequest -outfile $ENV:TEMP\cloudtruth.zip https://github.com/cloudtruth/cloudtruth-cli/releases/download/$CLOUDTRUTH_CLI_VERSION/cloudtruth-$CLOUDTRUTH_CLI_VERSION-x86_64-pc-windows-msvc.zip
+      Expand-Archive $ENV:TEMP\cloudtruth.zip  -DestinationPath $ENV:TEMP
+      copy-item -Path $ENV:Temp\cloudtruth-$CLOUDTRUTH_CLI_VERSION-x86_64-pc-windows-msvc\* C:\cloudtruth\
+      $env:Path += ";C:\cloudtruth"
+      cloudtruth --version
+    displayName: CloudTruth Installation
+
+  - powershell: |
+      $env:Path += ";C:\cloudtruth"
+      cloudtruth configuration profiles set default --api-key "${{ parameters.CLOUD_TRUTH_PROJECT_API_KEY }}"
+      Invoke-Expression 'cloudtruth --project $ {{ parameters.CLOUD_TRUTH_DEPLOYMENT_PROJECT }} template get ${{ parameters.CLOUD_TRUTH_ENVIRONMENT_VARIABLES_TEMPLATE }}'
+      ls env:\
+    displayName: "Set Pipeline Environment Variables w/ CloudTruth Provider"
