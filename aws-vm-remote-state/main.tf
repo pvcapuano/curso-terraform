@@ -11,7 +11,7 @@ terraform {
 
   /* backend "s3" {
     bucket = "exemplo-terraform-cli"
-    key    = "aws-vpc/terraform.tfstate"
+    key    = "aws-vm/terraform.tfstate"
     region = "eu-central-1"
   } */
 }
@@ -24,5 +24,14 @@ provider "aws" {
       owner      = "pvcapuano"
       managed-by = "terraform"
     }
+  }
+}
+
+data "terraform_remote_state" "vpc" {
+  backend = "s3"
+  config = {
+    bucket = "exemplo-terraform-cli"
+    key    = "aws-vpc/terraform.tfstate"
+    region = "eu-central-1"
   }
 }
